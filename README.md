@@ -1,5 +1,6 @@
 <h1>SpotiOver</h1>
 <img src="https://github.com/Noah20102021/SpotiOver/blob/main/Screenshot%202024-10-24%20153210%20(1).png">
+<img src="https://developer.spotify.com/images/guidelines/design/logo-size.svg" alt="Spotify logo" style="width:70px">
 <h2>Functions</h2>
 - Every time a new song starts playing on Spotify, it will be shown in a pop-up.
 <br>
