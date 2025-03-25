@@ -1,8 +1,8 @@
 <h1>SpotiOver</h1>
 <img src="https://github.com/Noah20102021/SpotiOver/blob/main/Screenshot%202024-10-24%20153210%20(1).png">
 <img src="https://developer.spotify.com/images/guidelines/design/logo-size.svg" alt="Spotify logo" style="width:70px">
-About
-A simple Python skript that displays the now playing song on Spotify with a smal POP-Up. Spotify Overlay
+
+A simple Python skript that displays the now playing song on Spotify with a smal POP-Up. 
 <h2>Functions</h2>
 - Every time a new song starts playing on Spotify, it will be shown in a pop-up.
 <br>
