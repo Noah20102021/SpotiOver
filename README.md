@@ -1,45 +1,67 @@
-<h1>SpotiOver</h1>
-<img src="https://github.com/Noah20102021/SpotiOver/blob/main/Screenshot%202024-10-24%20153210%20(1).png">
+# SpotiOver: Your Spotify Now Playing Overlay
+
+![SpotiOver Screenshot](https://github.com/Noah20102021/SpotiOver/blob/main/Screenshot%202024-10-24%20153210%20(1).png)
+
 <img src="https://developer.spotify.com/images/guidelines/design/logo-size.svg" alt="Spotify logo" style="width:70px">
 
-A simple Python skript that displays the now playing song on Spotify with a smal POP-Up. 
-<h2>Functions</h2>
-- Every time a new song starts playing on Spotify, it will be shown in a pop-up.
-<br>
-- Press CTRL + < to show the pop-up manually.
+SpotiOver is a lightweight Python application that provides a convenient pop-up overlay displaying the currently playing song from Spotify. Stay informed about your music without interrupting your workflow.
 
-<h2>How to install</h2>
-<h3>1. Download the Python file</h3>
-Download the Python file from above and paste it into a new folder wherever you want.
-<h3>2. Configure Spotify</h3>
-Go to developer.spotify.com and log in with your Spotify account. Then go to "Dashboard" and press "Create App," filling out the form with the following:
-<br>
-App name: SpotiOver
-<br>
-App description: Overlay
-<br>
-Redirect URIs: http://localhost:8888/callback
-<br>
-Which API/SDKs are you planning to use?: Web API
-<br>
-<br>
-Then go to your new App, and under "Settings," copy your Client-ID and Client-Secret. 
-Now open the Python file and paste the following:
-<br>
-Your client ID in line 199:  
-```client_id="Your-Client-ID"```
-<br>
-Your client secret in line 200:  
-```client_secret="Your-Client-Secret"```
-<h3>3. Add it to Autostart</h3>
-Make sure you have Python and pip installed. Open your terminal or PowerShell and type:
-<br>
-```pip install pyinstaller```
-<br>
-if you haven’t already installed PyInstaller. Then, use `cd` to navigate to the folder where your Python file is located. Once there, use:
-<br>
-```pyinstaller --onefile --windowed --hidden-import pynput.keyboard._win32 --hidden-import pynput.mouse._win32 --name SpotiOver spotiover.py```
-<br>
-Wait a few seconds to minutes until the terminal says: "Building EXE from exe-00.toc completed successfully." Now, press WIN + R and type in ```shell:startup```. Create a shortcut to `yourpath/folder/pythonfile/dist/SpotiOver.exe`.
-<br>
-<h2>And now you're ready</h2>
+## Features
+
+-   **Automatic Song Display:** A pop-up notification appears whenever a new song starts playing on Spotify.
+-   **Manual Pop-Up Trigger:** Press `CTRL + <` to manually display the current song information at any time.
+
+## Installation
+
+Follow these steps to get SpotiOver up and running on your system:
+
+### 1. Download the Python Script
+
+1.  Download the `spotiover.py` file from this repository.
+2.  Create a new folder and place the downloaded file inside.
+
+### 2. Configure Spotify API Credentials
+
+1.  Navigate to the Spotify Developer Dashboard: [developer.spotify.com](developer.spotify.com) and log in with your Spotify account.
+2.  Click "Create App" and fill in the following details:
+    -   **App name:** `SpotiOver`
+    -   **App description:** `Spotify Now Playing Overlay`
+    -   **Redirect URIs:** `http://localhost:8888/callback`
+    -   **Which API/SDKs are you planning to use?:** `Web API`
+3.  Go to your newly created app, and under "Settings," copy the "Client ID" and "Client Secret."
+4.  Open the `spotiover.py` file in a text editor.
+5.  Locate line 199 and replace `"Your-Client-ID"` with your copied Client ID:
+
+    ```python
+    client_id = "YOUR_CLIENT_ID"
+    ```
+
+6.  Locate line 200 and replace `"Your-Client-Secret"` with your copied Client Secret:
+
+    ```python
+    client_secret = "YOUR_CLIENT_SECRET"
+    ```
+
+### 3. Build and Add to Autostart
+
+1.  Ensure you have Python and `pip` installed.
+2.  Open your terminal or PowerShell and install PyInstaller:
+
+    ```bash
+    pip install pyinstaller
+    ```
+
+3.  Use `cd` to navigate to the folder containing `spotiover.py`.
+4.  Run the following PyInstaller command to create an executable:
+
+    ```bash
+    pyinstaller --onefile --windowed --hidden-import pynput.keyboard._win32 --hidden-import pynput.mouse._win32 --name SpotiOver spotiover.py
+    ```
+
+5.  Wait for the build process to complete. You'll see the message "Building EXE from exe-00.toc completed successfully."
+6.  Press `WIN + R` and type `shell:startup` to open the Startup folder.
+7.  Create a shortcut to the generated `SpotiOver.exe` file located in the `dist` folder within your project directory (e.g., `yourpath/folder/pythonfile/dist/SpotiOver.exe`).
+
+## Ready to Go!
+
+SpotiOver will now automatically launch when you start your computer and display Spotify's current song in a pop-up window. Enjoy your music with instant visual feedback!
