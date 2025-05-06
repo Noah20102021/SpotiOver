@@ -4,7 +4,7 @@
 
 <img src="https://developer.spotify.com/images/guidelines/design/logo-size.svg" alt="Spotify logo" style="width:70px">
 
-SpotiOver is a lightweight Python application that provides a convenient pop-up overlay displaying the currently playing song from Spotify. Stay informed about your music without interrupting your workflow.
+<a href="https://spotiover.4lima.de/">SpotiOver</a> is a lightweight Python application that provides a convenient pop-up overlay displaying the currently playing song from Spotify. Stay informed about your music without interrupting your workflow.
 
 ## Features
 
