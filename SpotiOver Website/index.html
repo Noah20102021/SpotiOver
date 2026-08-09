@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SpotiOver — the song, in the corner of your screen</title>
+
+<meta name="description" content="SpotiOver is a small open source overlay for Windows. A new song starts, a card slides in at the top left for six seconds, then leaves. Credentials stay in the Windows Credential Manager.">
+<meta name="keywords" content="SpotiOver, Spotify overlay, Windows, now playing, Python, PyQt6, desktop widget">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#DCDEE1">
+
+<meta property="og:title" content="SpotiOver — the song, in the corner of your screen">
+<meta property="og:description" content="A small open source Spotify overlay for Windows. Slides in on every track change, leaves after six seconds.">
+<meta property="og:url" content="https://spotiover.4lima.de">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://spotiover.4lima.de/examples/example1.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="SpotiOver — the song, in the corner of your screen">
+<meta name="twitter:description" content="A small open source Spotify overlay for Windows. Slides in on every track change, leaves after six seconds.">
+<meta name="twitter:image" content="https://spotiover.4lima.de/examples/example1.png">
+
+<link rel="icon" href="favicon.ico" type="image/x-icon">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --paper:#DCDEE1;
+  --panel:#F3F4F5;
+  --ink:#101214;
+  --muted:#666D73;
+  --line:#C3C7CB;
+  --dark:#181818;
+  --green:#1DB954;
+  --green-ink:#12793A;
+
+  --display:"Bricolage Grotesque",system-ui,sans-serif;
+  --body:"IBM Plex Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+
+  --pad:clamp(20px,5vw,64px);
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--body);
+  font-size:17px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--ink);outline-offset:3px;border-radius:2px}
+
+.wrap{max-width:1180px;margin:0 auto;padding:0 var(--pad)}
+.rule{height:1px;background:var(--line);border:0;margin:0}
+
+/* ---------- top bar ---------- */
+.topbar{
+  display:flex;align-items:baseline;gap:16px;
+  padding:22px 0 20px;
+  font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;
+}
+.topbar .mark{font-family:var(--display);font-size:17px;font-weight:800;letter-spacing:-.02em;text-transform:none}
+.topbar .ver{color:var(--muted)}
+.topbar nav{margin-left:auto;display:flex;gap:20px}
+.topbar nav a{color:var(--muted);text-decoration:none}
+.topbar nav a:hover{color:var(--ink)}
+
+/* ---------- hero ---------- */
+.hero{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,9fr);gap:clamp(28px,5vw,72px);padding:clamp(40px,7vw,84px) 0 clamp(36px,6vw,72px);align-items:start}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 22px}
+h1{
+  font-family:var(--display);
+  font-weight:800;
+  font-size:clamp(40px,5.6vw,72px);
+  line-height:.98;
+  letter-spacing:-.035em;
+  margin:0 0 24px;
+  text-wrap:balance;
+}
+h1 em{font-style:normal;color:var(--green-ink)}
+.lead{font-size:clamp(17px,1.3vw,19px);color:#33383D;margin:0 0 30px;max-width:44ch}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:28px}
+.btn{
+  display:inline-flex;align-items:center;gap:9px;
+  padding:13px 22px;border-radius:999px;
+  font-weight:600;font-size:15px;text-decoration:none;
+  border:1px solid var(--ink);
+  transition:transform .15s ease,background-color .15s ease,color .15s ease;
+}
+.btn-primary{background:var(--ink);color:var(--paper)}
+.btn-primary:hover{background:var(--green-ink);border-color:var(--green-ink);transform:translateY(-1px)}
+.btn-ghost{background:transparent}
+.btn-ghost:hover{background:rgba(16,18,20,.06);transform:translateY(-1px)}
+.facts{font-family:var(--mono);font-size:12.5px;color:var(--muted);line-height:2.1;border-top:1px solid var(--line);padding-top:18px}
+.facts b{color:var(--ink);font-weight:500}
+
+/* ---------- the screen (signature element) ---------- */
+.stage-col{position:relative;min-width:0}
+.screen{
+  position:relative;
+  aspect-ratio:16/10;
+  border-radius:14px;
+  overflow:hidden;
+  border:1px solid #B9BEC3;
+  background:
+    radial-gradient(75% 60% at 82% 8%, rgba(255,236,196,.55) 0%, transparent 60%),
+    radial-gradient(70% 70% at 12% 96%, rgba(29,185,84,.30) 0%, transparent 62%),
+    linear-gradient(155deg,#2E6A87 0%,#274C68 45%,#1B2A3D 100%);
+  box-shadow:0 24px 50px -28px rgba(16,18,20,.6);
+}
+.screen::after{
+  content:"";position:absolute;inset:auto 0 0 0;height:9%;
+  background:rgba(20,22,25,.55);
+  backdrop-filter:blur(6px);
+  border-top:1px solid rgba(255,255,255,.12);
+}
+.screen-dots{position:absolute;left:12px;bottom:2.4%;display:flex;gap:7px;z-index:3}
+.screen-dots i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.45)}
+
+/* the widget: same measurements as the app (64px tall, 10px radius) */
+.stage{
+  position:absolute;top:20px;left:20px;z-index:2;
+  --hidden:translateY(calc(-100% - 30px));
+  --shown:translateY(0);
+  --hidden-op:1;
+  --dur:300ms;
+  --ease:cubic-bezier(.215,.61,.355,1);   /* easeOutCubic, as in the app */
+  --ease-out:cubic-bezier(.55,.055,.675,.19);
+}
+.stage[data-mode="smooth"]{--dur:450ms;--ease:cubic-bezier(.23,1,.32,1)}
+.stage[data-mode="bounce"]{--dur:500ms;--ease:cubic-bezier(.34,1.56,.64,1)}
+.stage[data-mode="pop"]{--hidden:scale(.86);--shown:scale(1);--hidden-op:0;--dur:260ms;--ease:cubic-bezier(.34,1.56,.64,1)}
+.stage[data-mode="slidepop"]{--hidden:translateY(calc(-100% - 30px)) scale(.92);--shown:translateY(0) scale(1);--hidden-op:.4;--dur:420ms;--ease:cubic-bezier(.23,1,.32,1)}
+
+.widget{
+  position:relative;
+  display:flex;align-items:stretch;
+  height:64px;
+  background:var(--dark);
+  border-radius:10px;
+  overflow:hidden;
+  transform:var(--hidden);
+  opacity:var(--hidden-op);
+  transform-origin:top left;
+  transition:transform var(--dur) var(--ease-out),opacity calc(var(--dur) * .7) linear;
+  will-change:transform;
+}
+.widget.in{transform:var(--shown);opacity:1;transition:transform var(--dur) var(--ease),opacity calc(var(--dur) * .7) linear}
+.cover{width:64px;height:64px;flex:none;border-radius:10px;background:#333}
+.meta{display:flex;flex-direction:column;justify-content:center;padding:0 20px 0 8px;min-width:0}
+.meta .artist{font-family:"Segoe UI",var(--body);font-size:13px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:250px}
+.meta .title{font-family:"Segoe UI",var(--body);font-size:19px;color:var(--green);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:250px;line-height:1.25}
+.bar{position:absolute;left:0;bottom:0;height:3px;width:0;background:var(--green);display:none}
+.stage.showbar .bar{display:block}
+
+/* controls */
+.controls{min-width:0;max-width:100%;margin-top:18px;display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center}
+.seg{max-width:100%;display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:var(--panel)}
+.seg button{
+  appearance:none;border:0;background:transparent;cursor:pointer;
+  font-family:var(--mono);font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;
+  padding:9px 13px;color:var(--muted);
+}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.toggle{display:inline-flex;align-items:center;gap:9px;font-family:var(--mono);font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);cursor:pointer;user-select:none}
+.toggle input{position:absolute;opacity:0;width:0;height:0}
+.track{width:34px;height:19px;border-radius:999px;background:#BFC4C9;position:relative;transition:background .18s ease}
+.track::after{content:"";position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:#fff;transition:transform .18s ease}
+.toggle input:checked + .track{background:var(--green-ink)}
+.toggle input:checked + .track::after{transform:translateX(15px)}
+.toggle input:focus-visible + .track{outline:2px solid var(--ink);outline-offset:3px}
+.linkbtn{appearance:none;border:0;background:transparent;padding:0;cursor:pointer;font-family:var(--mono);font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink);text-decoration:underline;text-underline-offset:4px}
+.hint{font-family:var(--mono);font-size:12px;color:var(--muted);margin:14px 0 0}
+kbd{font-family:var(--mono);font-size:11.5px;background:var(--panel);border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:2px 6px}
+
+/* ---------- section frame ---------- */
+section{padding:clamp(52px,7vw,96px) 0}
+.sechead{display:flex;align-items:baseline;gap:18px;margin-bottom:38px;flex-wrap:wrap}
+.sechead h2{font-family:var(--display);font-weight:700;font-size:clamp(26px,3vw,38px);letter-spacing:-.025em;margin:0}
+.sechead p{margin:0;color:var(--muted);font-size:15px;max-width:46ch}
+
+/* ---------- then / now ---------- */
+.diff{display:grid;grid-template-columns:1fr;border-top:1px solid var(--line)}
+.row{display:grid;grid-template-columns:minmax(120px,1.1fr) minmax(0,2.2fr) minmax(0,2.6fr);gap:24px;padding:22px 0;border-bottom:1px solid var(--line);align-items:baseline}
+.row dt{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.then{color:var(--muted);font-size:15.5px}
+.then s{text-decoration-color:#B0B5BA}
+.now{font-size:15.5px}
+.now b{font-weight:600}
+.row:last-child .now{color:var(--green-ink);font-weight:600}
+
+/* ---------- specs ---------- */
+.specs{display:grid;grid-template-columns:repeat(3,1fr);gap:0 32px;border-top:1px solid var(--line)}
+.spec{padding:26px 0;border-bottom:1px solid var(--line)}
+
+.spec h3{font-family:var(--display);font-size:19px;font-weight:700;letter-spacing:-.01em;margin:0 0 8px}
+.spec p{margin:0;color:#3B4046;font-size:15.5px}
+.spec code{font-family:var(--mono);font-size:13px;background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+.tag{display:inline-block;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--green-ink);border:1px solid currentColor;border-radius:999px;padding:2px 8px;margin-left:8px;vertical-align:middle}
+
+/* ---------- settings mock ---------- */
+.window{
+  border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel);
+  box-shadow:0 18px 40px -30px rgba(16,18,20,.7);max-width:520px;
+}
+.window .bar2{display:flex;align-items:center;gap:8px;padding:10px 14px;background:#E7E9EA;border-bottom:1px solid var(--line);font-size:13px;font-weight:600}
+.window .tabs{display:flex;gap:2px;padding:12px 12px 0;font-family:var(--mono);font-size:11.5px;text-transform:uppercase;letter-spacing:.06em}
+.window .tabs span{padding:8px 12px;color:var(--muted);border:1px solid transparent}
+.window .tabs span.on{background:#fff;border-color:var(--line);border-bottom-color:#fff;color:var(--ink);border-radius:6px 6px 0 0}
+.window .body{background:#fff;border-top:1px solid var(--line);padding:18px;display:grid;gap:12px;font-size:14px}
+.field{display:flex;justify-content:space-between;gap:14px;align-items:center;color:#3B4046}
+.field .val{font-family:var(--mono);font-size:12.5px;color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:4px 9px;background:var(--panel)}
+.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(28px,5vw,64px);align-items:center}
+
+/* ---------- setup ---------- */
+.steps{counter-reset:step;display:grid;gap:2px}
+.step{display:grid;grid-template-columns:44px minmax(0,1fr);gap:20px;padding:24px 0;border-bottom:1px solid var(--line)}
+.step:first-child{border-top:1px solid var(--line)}
+.step::before{
+  counter-increment:step;content:counter(step,decimal-leading-zero);
+  font-family:var(--mono);font-size:12px;color:var(--green-ink);letter-spacing:.05em;padding-top:4px;
+}
+.step h3{margin:0 0 6px;font-size:17px;font-weight:600}
+.step p{margin:0;color:#3B4046;font-size:15.5px}
+pre{
+  font-family:var(--mono);font-size:13px;line-height:1.7;
+  background:var(--dark);color:#E6E8EA;border-radius:8px;padding:14px 16px;margin:12px 0 0;overflow-x:auto;
+}
+pre .c{color:#8A9198}
+pre .g{color:var(--green)}
+
+/* ---------- footer ---------- */
+footer{background:var(--ink);color:#B9BEC3;padding:clamp(40px,6vw,64px) 0 40px;font-size:14px}
+footer a{color:#E6E8EA}
+.foot{display:flex;flex-wrap:wrap;gap:32px;justify-content:space-between;align-items:flex-start}
+.foot p{margin:0 0 8px;max-width:56ch}
+.foot .small{color:#7C838A;font-size:13px}
+.foot img{opacity:.9}
+
+@media (max-width:1000px){
+  .specs{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:900px){
+  .hero{grid-template-columns:minmax(0,1fr);gap:34px;padding-top:clamp(28px,6vw,56px)}
+  .row{grid-template-columns:1fr;gap:6px;padding:20px 0}
+  .then s{text-decoration-color:#AEB3B8}
+  .split{grid-template-columns:1fr;gap:32px}
+  .topbar{flex-wrap:wrap;gap:10px 16px}
+  .topbar nav{margin-left:auto;gap:16px;flex-wrap:wrap}
+  .seg{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .seg button{white-space:nowrap}
+}
+@media (max-width:560px){
+  body{font-size:16px}
+  .specs{grid-template-columns:1fr}
+  .screen{aspect-ratio:5/4}
+  .stage{top:14px;left:14px;transform:scale(.88);transform-origin:top left}
+  .topbar .ver{width:100%;order:5}
+  .topbar nav{width:100%;margin-left:0}
+  .cta{gap:10px}
+  .btn{padding:12px 18px;font-size:14.5px}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .widget,.btn{transition:none}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="topbar">
+    <span class="mark">SpotiOver</span>
+    <span class="ver">v2.1 · Windows</span>
+    <nav>
+      <a href="#changes">What's new</a>
+      <a href="#features">Features</a>
+      <a href="#setup">Setup</a>
+      <a href="https://github.com/Noah20102021/SpotiOver">GitHub</a>
+    </nav>
+  </div>
+  <hr class="rule">
+
+  <!-- ============ HERO ============ -->
+  <div class="hero">
+    <div>
+      <p class="eyebrow">Open source Spotify overlay</p>
+      <h1>The song, top left, <em>then gone.</em></h1>
+      <p class="lead">
+        A new track starts and a small card slides in over everything else. Six seconds later
+        it leaves. No window to alt-tab to, no browser tab to check.
+      </p>
+      <div class="cta">
+        <a class="btn btn-primary" href="https://github.com/Noah20102021/SpotiOver">Get it on GitHub</a>
+        <a class="btn btn-ghost" href="#setup">How to set it up</a>
+      </div>
+      <div class="facts">
+        <b>Windows 10 / 11</b> · builds to a single .exe<br>
+        <b>Python 3.11+</b> with PyQt6 · <b>MIT</b> licensed<br>
+        <b>Free Spotify accounts</b> work — Premium not required
+      </div>
+    </div>
+
+    <div class="stage-col">
+      <div class="screen">
+        <div class="stage" id="stage" data-mode="classic">
+          <div class="widget" id="widget">
+            <div class="cover" id="cover"></div>
+            <div class="meta">
+              <span class="artist" id="artist">Halbmond</span>
+              <span class="title" id="title">Nordwand</span>
+            </div>
+            <div class="bar" id="bar"></div>
+          </div>
+        </div>
+        <div class="screen-dots"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="controls">
+        <div class="seg" role="group" aria-label="Animation style">
+          <button type="button" data-mode="classic" aria-pressed="true">Classic</button>
+          <button type="button" data-mode="smooth" aria-pressed="false">Smooth</button>
+          <button type="button" data-mode="bounce" aria-pressed="false">Overshoot</button>
+          <button type="button" data-mode="pop" aria-pressed="false">Pop</button>
+          <button type="button" data-mode="slidepop" aria-pressed="false">Slide + pop</button>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="barToggle">
+          <span class="track" aria-hidden="true"></span>
+          Progress bar
+        </label>
+        <button class="linkbtn" type="button" id="next">Play next track ▸</button>
+      </div>
+      <p class="hint">
+        This is the real thing, rebuilt in HTML — same 64 pixels, same easing curves.
+        Press <kbd>Ctrl</kbd> + <kbd>&lt;</kbd> to call it up, exactly like in the app.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ============ THEN / NOW ============ -->
+<div class="wrap">
+  <section id="changes">
+    <div class="sechead">
+      <h2>Rebuilt in 2026</h2>
+      <p>The first version was written in 2024 and quietly stopped working: Python moved on, and so did the Spotify API. Here's what changed.</p>
+    </div>
+    <dl class="diff">
+      <div class="row">
+        <dt>Credentials</dt>
+        <div class="then"><s>Compiled into the .exe, so the file could never be shared</s></div>
+        <div class="now">Stored in the <b>Windows Credential Manager</b>. Nothing sensitive ends up in the build, so the .exe can go straight to GitHub.</div>
+      </div>
+      <div class="row">
+        <dt>Sign-in</dt>
+        <div class="then"><s>Died silently once the token went stale</s></div>
+        <div class="now">Spotify expires refresh tokens after six months. SpotiOver notices, drops the dead token and asks you to sign in again — <b>once, twice a year</b>.</div>
+      </div>
+      <div class="row">
+        <dt>Redirect</dt>
+        <div class="then"><s>http://localhost:8888/callback</s></div>
+        <div class="now">Spotify only accepts the loopback IP now, so it's <b>127.0.0.1</b>. The sign-in itself uses PKCE, which means no client secret on disk.</div>
+      </div>
+      <div class="row">
+        <dt>Installing</dt>
+        <div class="then"><s>Drag the .exe into the startup folder and hope</s></div>
+        <div class="now">It registers <b>itself</b>: autostart, Start menu, and an entry under Installed apps with a working uninstaller.</div>
+      </div>
+      <div class="row">
+        <dt>Settings</dt>
+        <div class="then"><s>Open the .py and edit the constants</s></div>
+        <div class="now">A <b>settings window</b> in German or English. Changes apply while the overlay keeps running.</div>
+      </div>
+      <div class="row">
+        <dt>Hotkey</dt>
+        <div class="then"><s>Hard-coded, and broken — the combination never parsed</s></div>
+        <div class="now">Click <b>Record</b>, press the keys you want. Special characters are stored by key code, so they survive a keyboard layout change.</div>
+      </div>
+      <div class="row">
+        <dt>The look</dt>
+        <div class="then"><s>—</s></div>
+        <div class="now">Unchanged. That was the point.</div>
+      </div>
+    </dl>
+  </section>
+</div>
+
+<!-- ============ FEATURES ============ -->
+<div class="wrap">
+  <section id="features">
+    <div class="sechead">
+      <h2>What it does</h2>
+      <p>Two things by default. Everything else is optional and switched off until you want it.</p>
+    </div>
+    <div class="specs">
+      <div class="spec">
+        <h3>Slides in on every track change</h3>
+        <p>Cover, artist, title. Six seconds, then it's gone. It's click-through, so it never gets in the way of what's underneath.</p>
+      </div>
+      <div class="spec">
+        <h3>Or whenever you ask</h3>
+        <p>One key combination brings the current track back up. Default is <code>Ctrl + &lt;</code>, and you can record your own.</p>
+      </div>
+      <div class="spec">
+        <h3>Progress bar <span class="tag">experimental</span></h3>
+        <p>The bottom three pixels fill up green as the track plays, inside the rounded corners. Nothing else about the card moves.</p>
+      </div>
+      <div class="spec">
+        <h3>Animation styles <span class="tag">experimental</span></h3>
+        <p>Five ways in and out, from the original linear slide to a scale-up pop. Try them in the demo above.</p>
+      </div>
+      <div class="spec">
+        <h3>Starts with Windows</h3>
+        <p>On by default, off with one checkbox. The background service lives in the tray and survives closing the settings window.</p>
+      </div>
+      <div class="spec">
+        <h3>German and English</h3>
+        <p>Asked once on first launch, switchable any time. The window redraws in the new language on the spot.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ============ SETTINGS ============ -->
+<div class="wrap">
+  <section>
+    <div class="split">
+      <div>
+        <div class="sechead" style="margin-bottom:22px">
+          <h2>One window, four tabs</h2>
+        </div>
+        <p style="margin:0 0 18px;color:#3B4046;max-width:44ch">
+          Double-click the .exe, or search for it in the Start menu, and the settings open.
+          The overlay keeps running in the tray either way.
+        </p>
+        <p style="margin:0;color:#3B4046;max-width:44ch">
+          Client ID goes in once, sign-in takes a browser round trip, and the window tells you
+          the date your sign-in expires — so the six-month reminder is never a surprise.
+        </p>
+      </div>
+      <div class="window" aria-hidden="true">
+        <div class="bar2">SpotiOver — Settings</div>
+        <div class="tabs"><span class="on">Spotify</span><span>Display</span><span>Experimental</span><span>System</span></div>
+        <div class="body">
+          <div class="field"><span>Client ID</span><span class="val">••••••••••••4f2a</span></div>
+          <div class="field"><span>Client secret</span><span class="val">empty — using PKCE</span></div>
+          <div class="field"><span>Redirect URI</span><span class="val">127.0.0.1:8888/callback</span></div>
+          <div class="field" style="border-top:1px solid var(--line);padding-top:12px">
+            <span>Signed in</span><span class="val" style="color:var(--green-ink)">renew by 14.02.2027</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ============ SETUP ============ -->
+<div class="wrap">
+  <section id="setup">
+    <div class="sechead">
+      <h2>Setting it up</h2>
+      <p>Fifteen minutes, most of it waiting for the build.</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div>
+          <h3>Register an app with Spotify</h3>
+          <p>In the Developer Dashboard, create an app, tick Web API, and add this exact redirect URI. The client secret stays empty.</p>
+          <pre>http://127.0.0.1:8888/callback   <span class="c">← not localhost, no trailing slash</span></pre>
+        </div>
+      </div>
+      <div class="step">
+        <div>
+          <h3>Build the .exe</h3>
+          <p>Double-click <code style="font-family:var(--mono)">build.bat</code>. It sets up a virtual environment, installs the dependencies and runs PyInstaller.</p>
+          <pre><span class="c">:: or by hand</span>
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt pyinstaller
+pyinstaller build.spec --noconfirm   <span class="g">→ dist\SpotiOver.exe</span></pre>
+        </div>
+      </div>
+      <div class="step">
+        <div>
+          <h3>Start it once</h3>
+          <p>Pick a language, paste the client ID, sign in. It adds itself to autostart and the Start menu on that first run.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div>
+          <h3>Play something</h3>
+          <p>The card shows up on the next track change. Close the settings window — the overlay stays in the tray, and comes back on its own after a reboot.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <div>
+      <p>SpotiOver is not affiliated with, endorsed by, or supported by Spotify.</p>
+      <p class="small">
+        Cover artwork and track metadata in the real overlay come from Spotify. The demo on this
+        page uses invented titles and generated artwork.
+      </p>
+      <p class="small">
+        Spotify is a registered trademark of Spotify AB. All trademarks, service marks, and company names are the property of their respective owners.
+      </p>
+      <p class="small">© 2024–2026 SpotiOver by Noah Schleder · <a href="https://github.com/Noah20102021/SpotiOver">Source on GitHub</a></p>
+    </div>
+    <a href="https://open.spotify.com/" aria-label="Spotify">
+      <img src="https://lernet.4lima.de/Full_Logo_White_RGB.svg" width="110" height="34" alt="Spotify">
+    </a>
+  </div>
+</footer>
+
+<script>
+(function(){
+  const stage  = document.getElementById('stage');
+  const widget = document.getElementById('widget');
+  const bar    = document.getElementById('bar');
+  const cover  = document.getElementById('cover');
+  const artist = document.getElementById('artist');
+  const title  = document.getElementById('title');
+  const next   = document.getElementById('next');
+  const barToggle = document.getElementById('barToggle');
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const tracks = [
+    {a:'Halbmond',       t:'Nordwand',          len:214, c:['#E0553F','#3B2EA3']},
+    {a:'Aviary Club',    t:'Slow Static',       len:187, c:['#1DB954','#0B3B6F']},
+    {a:'Marta Vellum',   t:'Blue Hour Drive',   len:246, c:['#F2B705','#B5179E']},
+    {a:'Koster & Nakai', t:'Paper Radio',       len:171, c:['#00C2CB','#25324B']},
+    {a:'Feldstein',      t:'Kurzwelle',         len:203, c:['#FF7A45','#1E1B2E']}
+  ];
+
+  let i = -1, pos = 0, last = performance.now(), hideTimer = null;
+
+  function paintCover(t){
+    cover.style.background = 'linear-gradient(135deg,' + t.c[0] + ' 0%,' + t.c[1] + ' 100%)';
+  }
+
+  function show(){
+    clearTimeout(hideTimer);
+    widget.classList.add('in');
+    hideTimer = setTimeout(() => widget.classList.remove('in'), 6000);
+  }
+
+  function play(index){
+    i = (index + tracks.length) % tracks.length;
+    const t = tracks[i];
+    artist.textContent = t.a;
+    title.textContent = t.t;
+    paintCover(t);
+    // irgendwo mitten im Song starten, damit die Progress-Bar etwas zu zeigen hat
+    pos = t.len * (0.22 + Math.random() * 0.45);
+    show();
+  }
+
+  function frame(now){
+    const dt = (now - last) / 1000;
+    last = now;
+    const t = tracks[i] || tracks[0];
+    pos += dt;
+    if (pos >= t.len) { play(i + 1); }            // track ends → next one slides in
+    bar.style.width = ((pos / t.len) * 100).toFixed(2) + '%';
+    requestAnimationFrame(frame);
+  }
+
+  // animation style
+  document.querySelectorAll('.seg button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-pressed', String(b === btn)));
+      stage.dataset.mode = btn.dataset.mode;
+      widget.classList.remove('in');
+      setTimeout(show, 260);                       // replay so the choice is visible
+    });
+  });
+
+  barToggle.addEventListener('change', () => {
+    stage.classList.toggle('showbar', barToggle.checked);
+    show();
+  });
+
+  next.addEventListener('click', () => play(i + 1));
+
+  // the actual hotkey: Ctrl + < (the key next to Y on a German layout)
+  window.addEventListener('keydown', e => {
+    if (e.ctrlKey && (e.code === 'IntlBackslash' || e.key === '<')) {
+      e.preventDefault();
+      show();
+    }
+  });
+
+  play(0);
+  if (reduce) { widget.classList.add('in'); clearTimeout(hideTimer); }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
